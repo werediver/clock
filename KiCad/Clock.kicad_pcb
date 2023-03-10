@@ -3693,6 +3693,11 @@
       (net 44 "/USB_D-") (pinfunction "D-") (pintype "bidirectional") (tstamp c354a9ff-5fce-44f5-a257-297251f4e3c1))
     (pad "TP3" smd roundrect (at -1 -24.3 90) (size 1.5 1.5) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.2)
       (net 45 "/USB_D+") (pinfunction "D+") (pintype "bidirectional") (tstamp 5db08423-f85c-4950-8d5f-6e00e8f904c7))
+    (model "${KIPRJMOD}/Lib/Pico.wrl"
+      (offset (xyz 0 0 0))
+      (scale (xyz 1 1 1))
+      (rotate (xyz 0 0 0))
+    )
   )
 
   (footprint "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder" (layer "F.Cu")

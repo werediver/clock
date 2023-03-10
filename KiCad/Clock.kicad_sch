@@ -2700,8 +2700,7 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 572759c7-b0fb-45e4-acc0-52e27bc953ef)
   )
-  (text "Nexperia MOSFETs\nP-ch. PMV75UP, NXV75UP\nN-ch. PMV65UN, NXV65UN"
-    (at 129.54 21.59 0)
+  (text "Nexperia MOSFETs\nP-ch. PMV75UP\nN-ch. PMV65UN" (at 129.54 21.59 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 6dc95a4a-5d42-4927-99af-71d34d4e8a10)
   )
@@ -2715,7 +2714,7 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 9a9a0821-ae31-4cd0-ba9f-d629df3414a2)
   )
-  (text "TODO:\n- Add sensor buttons (with TVS diodes?)\n- Add the battery holder footprint\n- Consider adding test-points for power consumption profiling, etc."
+  (text "TODO:\n- Add TVS diodes to the sensor buttons?\n- Consider adding test-points for power consumption profiling, etc."
     (at 27.94 25.4 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid be9fd9d2-14f3-451a-936b-30e91adbd728)
