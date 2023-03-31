@@ -4,10 +4,10 @@ This [Pico](https://www.raspberrypi.com/documentation/microcontrollers/raspberry
 
 The estimated run-time on a single charge is _one week_ (yes, _just_ one week).
 
-<p width="100%">
-<img alt="PCB 3D view, top" width="49%" src="images/3D%20top.png">
-<img alt="PCB 3D view, bottom" width="49%" src="images/3D%20bottom.png">
+<p width="100%" align="justify">
+<img alt="PCB 3D view, top" width="49.5%" src="images/3D%20top.png">
+<img alt="PCB 3D view, bottom" width="49.5%" src="images/3D%20bottom.png">
 <img alt="Photo, combined" width="100%" src="images/Photo%20comb.jpg">
 </p>
 
-When assembling, refer to the [interactive BOM](http://htmlpreview.github.io/?https://github.com/werediver/clock/tree/main/KiCad/bom/ibom.html) page.
+When assembling, refer to the [interactive BOM](https://htmlpreview.github.io/?https://github.com/werediver/clock/blob/main/KiCad/bom/ibom.html) page.
