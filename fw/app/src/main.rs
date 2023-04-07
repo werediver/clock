@@ -43,6 +43,22 @@ fn main() -> ! {
         &mut pac.RESETS,
     );
 
+    let rtc = hal::rtc::RealTimeClock::new(
+        pac.RTC,
+        clocks.rtc_clock,
+        &mut pac.RESETS,
+        hal::rtc::DateTime {
+            year: 2023,
+            month: 4,
+            day_of_week: hal::rtc::DayOfWeek::Friday,
+            day: 7,
+            hour: 9,
+            minute: 1,
+            second: 0,
+        },
+    )
+    .unwrap();
+
     let pac = unsafe { pac::Peripherals::steal() };
 
     seg_disp_configure(&pac.IO_BANK0, &pac.SIO);
@@ -51,7 +67,17 @@ fn main() -> ! {
 
     let mut disp = seg_disp::disp::Disp::<4>::default();
     loop {
-        disp.set_chars(dec_to_char7dp(i / 50));
+        let now = rtc.now().unwrap();
+        let mut hh = dec_to_char7dp::<2>(now.hour as usize, false);
+        if now.second & 1 == 0 {
+            hh[0] = hh[0].with_dp();
+        }
+        let mm = dec_to_char7dp::<2>(now.minute as usize, true);
+        let mut time = [Char7DP::space(); 4];
+        time[0..2].copy_from_slice(&mm);
+        time[2..4].copy_from_slice(&hh);
+
+        disp.set_chars(time);
 
         match disp.run() {
             seg_disp::disp::Action::Render(c, i) => {
@@ -65,35 +91,14 @@ fn main() -> ! {
     }
 }
 
-fn dec_to_char7dp<const N: usize>(n: usize) -> [Char7DP; N] {
+fn dec_to_char7dp<const N: usize>(n: usize, leading_zeros: bool) -> [Char7DP; N] {
+    let mut p = n;
     let mut chars = [Char7DP::space(); N];
 
-    const fn gen_exp10<const N: usize>() -> [usize; N] {
-        let mut exp10 = [0usize; N];
-
-        let mut i = 0;
-        let mut value = 1;
-        while i < N {
-            exp10[i] = value;
-            if i < N - 1 {
-                value *= 10;
-            }
-            i += 1;
-        }
-
-        exp10
-    }
-
-    struct Const<const N: usize> {}
-
-    impl<const N: usize> Const<N> {
-        const EXP10: [usize; N] = gen_exp10();
-    }
-
     for i in 0..N {
-        let p = n / Const::<N>::EXP10[i];
-        chars[i] = if p > 0 || i == 0 {
+        chars[i] = if p > 0 || i == 0 || leading_zeros {
             let q = (p % 10) as u8;
+            p /= 10;
             Char7DP::try_from_u8(q).unwrap()
         } else {
             Char7DP::space()
