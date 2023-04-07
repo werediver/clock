@@ -1,6 +1,5 @@
 extern crate alloc;
 
-use alloc::{borrow::ToOwned, string::String, vec::Vec};
 use snafu::Snafu;
 
 /// Individual segments of a seven-segment indicator with a decimal point.
@@ -71,19 +70,17 @@ impl Char7DP {
     }
 
     pub const fn try_from_u8(value: u8) -> Result<Self, Char7DPTryFromError> {
-        use Segment7DP::*;
-
         match value {
-            0 => Ok(Self::new(&[A, B, C, D, E, F])),
-            1 => Ok(Self::new(&[B, C])),
-            2 => Ok(Self::new(&[A, B, G, E, D])),
-            3 => Ok(Self::new(&[A, B, G, C, D])),
-            4 => Ok(Self::new(&[F, G, B, C])),
-            5 => Ok(Self::new(&[A, F, G, C, D])),
-            6 => Ok(Self::new(&[A, F, E, D, C, G])),
-            7 => Ok(Self::new(&[A, B, C])),
-            8 => Ok(Self::new(&[A, B, C, D, E, F, G])),
-            9 => Ok(Self::new(&[G, F, A, B, C, D])),
+            0 => Self::try_from_char('0'),
+            1 => Self::try_from_char('1'),
+            2 => Self::try_from_char('2'),
+            3 => Self::try_from_char('3'),
+            4 => Self::try_from_char('4'),
+            5 => Self::try_from_char('5'),
+            6 => Self::try_from_char('6'),
+            7 => Self::try_from_char('7'),
+            8 => Self::try_from_char('8'),
+            9 => Self::try_from_char('9'),
             _ => Err(Char7DPTryFromError::UnsupportedValue),
         }
     }
@@ -111,25 +108,37 @@ impl Char7DP {
         }
     }
 
-    pub const fn try_from_chars<const N: usize>(
-        value: &[char; N],
-    ) -> Result<[Self; N], Char7DPTryFromError> {
-        let mut s = [Self::space(); N];
-
-        let mut i = 0usize;
-        while i < N {
-            if let Ok(c) = Self::try_from_char(value[i]) {
-                s[i] = c;
-            } else {
-                return Err(Char7DPTryFromError::UnsupportedValue);
-            }
-
-            i += 1;
+    pub const fn with_dp(&self) -> Self {
+        Self {
+            state: self.state | Segment7DP::DP as u8,
         }
-
-        Ok(s)
     }
 
+    #[inline]
+    pub fn state(&self) -> u8 {
+        self.state
+    }
+
+    pub fn is_set(&self, seg: Segment7DP) -> bool {
+        let seg = seg as u8;
+        self.state & seg == seg
+    }
+
+    pub fn set(&mut self, seg: Segment7DP) -> &mut Self {
+        self.state |= seg as u8;
+        self
+    }
+
+    pub fn set_dp(&mut self, value: bool) -> &mut Self {
+        if value {
+            self.state |= Segment7DP::DP as u8;
+        } else {
+            self.state &= !(Segment7DP::DP as u8);
+        }
+        self
+    }
+
+    #[cfg(test)]
     pub fn try_from_str(value: &str) -> Result<Vec<Char7DP>, Char7DPTryFromError> {
         let mut s = Vec::with_capacity(value.len());
 
@@ -150,22 +159,7 @@ impl Char7DP {
         Ok(s)
     }
 
-    pub const fn with_dp(&self) -> Self {
-        Self {
-            state: self.state | Segment7DP::DP as u8,
-        }
-    }
-
-    #[inline]
-    pub fn state(&self) -> u8 {
-        self.state
-    }
-
-    pub fn is_set(&self, seg: Segment7DP) -> bool {
-        let seg = seg as u8;
-        self.state & seg == seg
-    }
-
+    #[cfg(test)]
     pub fn render(value: &[Self]) -> String {
         use Segment7DP::*;
 

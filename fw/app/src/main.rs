@@ -8,7 +8,7 @@ use embedded_alloc::Heap;
 use hal::Clock;
 use rp_pico::{entry, hal, hal::pac};
 use rtt_target::{rprintln, rtt_init_print};
-use seg_disp::char7dp::Char7DP;
+use seg_disp::{char7dp::Char7DP, char7dp_seq::Char7DPSeq};
 
 #[entry]
 fn main() -> ! {
@@ -63,20 +63,10 @@ fn main() -> ! {
 
     seg_disp_configure(&pac.IO_BANK0, &pac.SIO);
 
-    let mut i = 0usize;
-
     let mut disp = seg_disp::disp::Disp::<4>::default();
     loop {
         let now = rtc.now().unwrap();
-        let mut hh = dec_to_char7dp::<2>(now.hour as usize, false);
-        if now.second & 1 == 0 {
-            hh[0] = hh[0].with_dp();
-        }
-        let mm = dec_to_char7dp::<2>(now.minute as usize, true);
-        let mut time = [Char7DP::space(); 4];
-        time[0..2].copy_from_slice(&mm);
-        time[2..4].copy_from_slice(&hh);
-
+        let time = hhmm_to_char7dp_array(now.hour, now.minute, now.second);
         disp.set_chars(time);
 
         match disp.run() {
@@ -85,27 +75,17 @@ fn main() -> ! {
             }
         }
 
-        (i, _) = i.overflowing_add(1);
-
         delay.delay_ms(5);
     }
 }
 
-fn dec_to_char7dp<const N: usize>(n: usize, leading_zeros: bool) -> [Char7DP; N] {
-    let mut p = n;
-    let mut chars = [Char7DP::space(); N];
+fn hhmm_to_char7dp_array(hour: u8, minute: u8, second: u8) -> [Char7DP; 4] {
+    let mut time = [Char7DP::space(); 4];
 
-    for i in 0..N {
-        chars[i] = if p > 0 || i == 0 || leading_zeros {
-            let q = (p % 10) as u8;
-            p /= 10;
-            Char7DP::try_from_u8(q).unwrap()
-        } else {
-            Char7DP::space()
-        }
-    }
+    Char7DPSeq::new(&mut time[0..2]).set_dec(minute as usize, true);
+    Char7DPSeq::new(&mut time[2..4]).set_dec(hour as usize, false)[0].set_dp(second & 1 == 0);
 
-    chars
+    time
 }
 
 const GPIO_SEG_OFFSET: u32 = 1;
