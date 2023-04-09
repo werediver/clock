@@ -1,5 +1,9 @@
 [workspace]
 members = [
   "app",
+  "lib/app-core",
   "lib/seg-disp",
 ]
+
+[workspace.dependencies]
+fugit = "0.3.6"

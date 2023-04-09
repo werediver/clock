@@ -10,6 +10,11 @@ use rp_pico::{entry, hal, hal::pac};
 use rtt_target::{rprintln, rtt_init_print};
 use seg_disp::{char7dp::Char7DP, char7dp_seq::Char7DPSeq};
 
+use crate::uptime::Uptime;
+
+mod uptime;
+mod uptime_delay;
+
 #[entry]
 fn main() -> ! {
     rtt_init_print!();
@@ -31,8 +36,6 @@ fn main() -> ! {
     )
     .ok()
     .unwrap();
-
-    let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().to_Hz());
 
     let sio = hal::Sio::new(pac.SIO);
 
@@ -59,6 +62,8 @@ fn main() -> ! {
     )
     .unwrap();
 
+    let uptime = Uptime::new(core.SYST, 5);
+
     let pac = unsafe { pac::Peripherals::steal() };
 
     seg_disp_configure(&pac.IO_BANK0, &pac.SIO);
@@ -75,7 +80,7 @@ fn main() -> ! {
             }
         }
 
-        delay.delay_ms(5);
+        uptime.delay_ms(5);
     }
 }
 
