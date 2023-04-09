@@ -139,4 +139,7 @@ fn SysTick() {
     }
 }
 
-static mut SYST_RELOAD_COUNT: u32 = 0;
+/// The uptime overflows after [`SYST_RELOAD_COUNT`] times `syst_reload_period_ms`.
+///
+/// For `syst_reload_period_ms` less than 1 second this variable should probably be `u64`.
+static mut SYST_RELOAD_COUNT: u64 = 0;
