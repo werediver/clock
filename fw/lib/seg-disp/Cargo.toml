@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 snafu = { version = "0.7.4", default-features = false, features = ["unstable-core-error", "rust_1_61"] }
+fugit = { workspace = true }

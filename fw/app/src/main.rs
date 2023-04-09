@@ -4,6 +4,7 @@
 
 use core::{alloc::Layout, panic::PanicInfo};
 
+use app_core::common::Duration;
 use embedded_alloc::Heap;
 use hal::Clock;
 use rp_pico::{entry, hal, hal::pac};
@@ -68,19 +69,20 @@ fn main() -> ! {
 
     seg_disp_configure(&pac.IO_BANK0, &pac.SIO);
 
-    let mut disp = seg_disp::disp::Disp::<4>::default();
+    let mut disp = seg_disp::disp::Disp::<4>::new(Duration::from_ticks(5_000), 1.0);
     loop {
         let now = rtc.now().unwrap();
         let time = hhmm_to_char7dp_array(now.hour, now.minute, now.second);
         disp.set_chars(time);
 
-        match disp.run() {
+        let (action, delay) = disp.run();
+        match action {
             seg_disp::disp::Action::Render(c, i) => {
                 seg_disp_update(c, i, &pac.SIO);
             }
         }
 
-        uptime.delay_ms(5);
+        uptime.delay_us(delay.to_micros());
     }
 }
 
