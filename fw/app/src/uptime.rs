@@ -58,7 +58,7 @@ impl Uptime {
                         let syst_reload_period_us =
                             1000 * (syst_reload as u64 + 1) * 10 / syst_ticks_per_10ms;
 
-                        syst_reload_count as u64 * syst_reload_period_us
+                        syst_reload_count * syst_reload_period_us
                     };
 
                     let syst_current_us =

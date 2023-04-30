@@ -1,12 +1,19 @@
 #![no_std]
 #![no_main]
-#![feature(alloc_error_handler)]
 
-use core::{alloc::Layout, panic::PanicInfo};
+extern crate alloc;
 
-use app_core::common::Duration;
+use alloc::boxed::Box;
+use core::panic::PanicInfo;
+
+use app_core::{
+    action::Action,
+    common::Duration,
+    scheduler::Scheduler,
+    state::State,
+    task::{FnTask, NextRun},
+};
 use embedded_alloc::Heap;
-use hal::Clock;
 use rp_pico::{entry, hal, hal::pac};
 use rtt_target::{rprintln, rtt_init_print};
 use seg_disp::{char7dp::Char7DP, char7dp_seq::Char7DPSeq};
@@ -69,20 +76,31 @@ fn main() -> ! {
 
     seg_disp_configure(&pac.IO_BANK0, &pac.SIO);
 
-    let mut disp = seg_disp::disp::Disp::<4>::new(Duration::from_ticks(5_000), 1.0);
-    loop {
-        let now = rtc.now().unwrap();
-        let time = hhmm_to_char7dp_array(now.hour, now.minute, now.second);
-        disp.set_chars(time);
+    let mut disp = seg_disp::disp::Disp::<4>::new(Duration::from_ticks(2_000), 1.0);
 
-        let (action, delay) = disp.run();
-        match action {
-            seg_disp::disp::Action::Render(c, i) => {
-                seg_disp_update(c, i, &pac.SIO);
+    let mut scheduler =
+        Scheduler::<State, Action>::new([Box::new(FnTask::new(move |_: &mut State| {
+            let now = rtc.now().unwrap();
+            let time = hhmm_to_char7dp_array(now.hour, now.minute, now.second);
+            disp.set_chars(time);
+
+            let (action, delay) = disp.run();
+
+            (Some(Action::Display(action)), NextRun::After(delay))
+        })) as _]);
+
+    let mut state = State {};
+
+    loop {
+        if let Some(action) = scheduler.run(uptime.get_instant(), &mut state) {
+            match action {
+                Action::Display(action) => match action {
+                    seg_disp::disp::Action::Render(c, i) => {
+                        seg_disp_update(c, i, &pac.SIO);
+                    }
+                },
             }
         }
-
-        uptime.delay_us(delay.to_micros());
     }
 }
 
@@ -133,18 +151,6 @@ fn init_heap() {
     const HEAP_SIZE: usize = 64 * 1024;
     static mut HEAP_MEM: [MaybeUninit<u8>; HEAP_SIZE] = [MaybeUninit::uninit(); HEAP_SIZE];
     unsafe { HEAP.init(HEAP_MEM.as_ptr() as usize, HEAP_SIZE) }
-}
-
-#[alloc_error_handler]
-fn oom(layout: Layout) -> ! {
-    rprintln!(
-        "failed to allocate {} bytes aligned on {} bytes)",
-        layout.size(),
-        layout.align()
-    );
-    loop {
-        cortex_m::asm::wfi();
-    }
 }
 
 #[panic_handler]

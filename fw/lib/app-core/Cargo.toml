@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 fugit = { workspace = true }
+seg-disp = { path = "../seg-disp" }

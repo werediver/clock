@@ -15,6 +15,22 @@
         "$rustc"
       ],
       "group": "build"
+    },
+    {
+      "label": "Cargo build release",
+      "type": "shell",
+      "command": "cargo",
+      "args": [
+        "build",
+        "--release"
+      ],
+      "options": {
+        "cwd": "app"
+      },
+      "problemMatcher": [
+        "$rustc"
+      ],
+      "group": "build"
     }
   ]
 }
