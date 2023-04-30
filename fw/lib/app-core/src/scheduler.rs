@@ -14,15 +14,6 @@ pub struct Scheduler<State, Action> {
     next_in_order: usize,
 }
 
-impl<State, Action> Default for Scheduler<State, Action> {
-    fn default() -> Self {
-        Self {
-            tasks: Default::default(),
-            next_in_order: 0,
-        }
-    }
-}
-
 impl<State, Action> Scheduler<State, Action> {
     pub fn new(tasks: impl IntoIterator<Item = Box<dyn Task<State, Action>>>) -> Self {
         Self {

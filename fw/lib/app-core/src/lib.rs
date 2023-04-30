@@ -2,6 +2,7 @@
 
 pub mod action;
 pub mod common;
+pub mod features;
 pub mod scheduler;
 pub mod state;
 pub mod task;

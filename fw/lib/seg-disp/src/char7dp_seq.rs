@@ -1,4 +1,4 @@
-use core::ops::{Deref, DerefMut};
+use core::ops::{Index, IndexMut};
 
 use crate::char7dp::Char7DP;
 
@@ -7,17 +7,17 @@ pub struct Char7DPSeq<'a> {
     chars: &'a mut [Char7DP],
 }
 
-impl<'a> Deref for Char7DPSeq<'a> {
-    type Target = [Char7DP];
+impl<'a> Index<usize> for Char7DPSeq<'a> {
+    type Output = Char7DP;
 
-    fn deref(&self) -> &Self::Target {
-        self.chars
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.chars[index]
     }
 }
 
-impl<'a> DerefMut for Char7DPSeq<'a> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.chars
+impl<'a> IndexMut<usize> for Char7DPSeq<'a> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.chars[index]
     }
 }
 

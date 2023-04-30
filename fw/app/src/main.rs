@@ -8,7 +8,6 @@ use core::panic::PanicInfo;
 
 use app_core::{
     action::Action,
-    common::Duration,
     scheduler::Scheduler,
     state::State,
     task::{FnTask, NextRun},
@@ -16,7 +15,7 @@ use app_core::{
 use embedded_alloc::Heap;
 use rp_pico::{entry, hal, hal::pac};
 use rtt_target::{rprintln, rtt_init_print};
-use seg_disp::{char7dp::Char7DP, char7dp_seq::Char7DPSeq};
+use seg_disp::char7dp::Char7DP;
 
 use crate::uptime::Uptime;
 
@@ -76,20 +75,24 @@ fn main() -> ! {
 
     seg_disp_configure(&pac.IO_BANK0, &pac.SIO);
 
-    let mut disp = seg_disp::disp::Disp::<4>::new(Duration::from_ticks(2_000), 1.0);
+    let app_display = app_core::features::display::Display::default();
 
-    let mut scheduler =
-        Scheduler::<State, Action>::new([Box::new(FnTask::new(move |_: &mut State| {
+    let mut scheduler = Scheduler::<State, Action>::new([
+        Box::new(FnTask::new(move |state: &mut State| {
             let now = rtc.now().unwrap();
-            let time = hhmm_to_char7dp_array(now.hour, now.minute, now.second);
-            disp.set_chars(time);
 
-            let (action, delay) = disp.run();
+            state.rtc = app_core::state::RTC {
+                hour: now.hour,
+                minute: now.minute,
+                second: now.second,
+            };
 
-            (Some(Action::Display(action)), NextRun::After(delay))
-        })) as _]);
+            (None, NextRun::InOrder)
+        })) as _,
+        Box::new(app_display) as _,
+    ]);
 
-    let mut state = State {};
+    let mut state = State::default();
 
     loop {
         if let Some(action) = scheduler.run(uptime.get_instant(), &mut state) {
@@ -102,15 +105,6 @@ fn main() -> ! {
             }
         }
     }
-}
-
-fn hhmm_to_char7dp_array(hour: u8, minute: u8, second: u8) -> [Char7DP; 4] {
-    let mut time = [Char7DP::space(); 4];
-
-    Char7DPSeq::new(&mut time[0..2]).set_dec(minute as usize, true);
-    Char7DPSeq::new(&mut time[2..4]).set_dec(hour as usize, false)[0].set_dp(second & 1 == 0);
-
-    time
 }
 
 const GPIO_SEG_OFFSET: u32 = 1;
