@@ -6,7 +6,7 @@
       "name": "Debug with BMP",
       "cwd": "${workspaceRoot}",
       "executable": "${workspaceRoot}/target/thumbv6m-none-eabi/debug/app",
-      "preLaunchTask": "Cargo build",
+      "preLaunchTask": "Build (debug)",
       "servertype": "bmp",
       "BMPGDBSerialPort": "/dev/cu.usbmodem98B6AFC21",
       "preLaunchCommands": [

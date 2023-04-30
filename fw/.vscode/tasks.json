@@ -2,7 +2,8 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Cargo build",
+      "label": "Build (debug)",
+      "group": "build",
       "type": "shell",
       "command": "cargo",
       "args": [
@@ -13,11 +14,11 @@
       },
       "problemMatcher": [
         "$rustc"
-      ],
-      "group": "build"
+      ]
     },
     {
-      "label": "Cargo build release",
+      "label": "Build (release)",
+      "group": "build",
       "type": "shell",
       "command": "cargo",
       "args": [
@@ -29,8 +30,43 @@
       },
       "problemMatcher": [
         "$rustc"
+      ]
+    },
+    {
+      "label": "Flash (debug)",
+      "group": "build",
+      "type": "shell",
+      "dependsOn": "Cargo build",
+      "command": "arm-none-eabi-gdb",
+      "args": [
+        "-q",
+        "--se",
+        "target/thumbv6m-none-eabi/debug/app",
+        "-x",
+        "app/flash.gdb",
+        "--batch"
       ],
-      "group": "build"
+      "problemMatcher": [
+        "$rustc"
+      ]
+    },
+    {
+      "label": "Flash (release)",
+      "group": "build",
+      "type": "shell",
+      "dependsOn": "Cargo build release",
+      "command": "arm-none-eabi-gdb",
+      "args": [
+        "-q",
+        "--se",
+        "target/thumbv6m-none-eabi/release/app",
+        "-x",
+        "app/flash.gdb",
+        "--batch"
+      ],
+      "problemMatcher": [
+        "$rustc"
+      ]
     }
   ]
 }
