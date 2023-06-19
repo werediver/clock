@@ -11,3 +11,20 @@ The estimated run-time on a single charge is _one week_ (yes, _just_ one week).
 </p>
 
 When assembling, refer to the [interactive BOM](https://htmlpreview.github.io/?https://github.com/werediver/clock/blob/main/KiCad/bom/ibom.html) page.
+
+## NiMH battery charger
+
+```mermaid
+---
+title: Charger state machine
+---
+stateDiagram-v2
+    [*] --> Hold
+    Hold --> Charge: ext_power && v < HIGH
+    Charge --> Charged: d(v) ≤ NDV || is_adc_saturated() || is_timed_out()
+    Charged --> Charge: v < HIGH
+    Charge --> Hold: !ext_power
+    Charged --> Hold: !ext_power
+```
+
+- [ ] Add a time-out for `v ≥ NiMH_HIGH` (1–2h?)

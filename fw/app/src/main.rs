@@ -5,15 +5,24 @@ extern crate alloc;
 
 use alloc::boxed::Box;
 use core::panic::PanicInfo;
+use embedded_hal::{
+    digital::v2::{InputPin, OutputPin},
+    prelude::_embedded_hal_adc_OneShot,
+};
 
 use app_core::{
     action::Action,
-    scheduler::Scheduler,
+    common::Duration,
+    features::charger::ChargerAction,
     state::State,
-    task::{FnTask, NextRun},
+    task::{scheduler::Scheduler, FnTask, NextRun, Task},
 };
 use embedded_alloc::Heap;
-use rp_pico::{entry, hal, hal::pac};
+use rp_pico::{
+    entry,
+    hal::pac,
+    hal::{self, gpio::PinState},
+};
 use rtt_target::{rprintln, rtt_init_print};
 
 use crate::{
@@ -49,7 +58,7 @@ fn main() -> ! {
 
     let sio = hal::Sio::new(pac.SIO);
 
-    let _pins = rp_pico::Pins::new(
+    let pins = rp_pico::Pins::new(
         pac.IO_BANK0,
         pac.PADS_BANK0,
         sio.gpio_bank0,
@@ -74,11 +83,26 @@ fn main() -> ! {
 
     let uptime = Uptime::new(core.SYST, 5);
 
-    let pac = unsafe { pac::Peripherals::steal() };
+    fn adc_f32(value: u16) -> f32 {
+        const ADC_MAX: u16 = 0x0fff;
+        const ADC_VREF: f32 = 3.0;
 
+        ADC_VREF * value as f32 / ADC_MAX as f32
+    }
+
+    let mut adc = hal::Adc::new(pac.ADC, &mut pac.RESETS);
+    let mut bat_v1_pin = pins.gpio26.into_floating_input();
+    let mut bat_v2_pin = pins.gpio27.into_floating_input();
+
+    let ext_power_detect_pin = pins.vbus_detect.into_floating_input();
+
+    let mut ncharge_pin = pins.gpio18.into_push_pull_output_in_state(PinState::High);
+
+    let pac = unsafe { pac::Peripherals::steal() };
     seg_disp_configure(&pac.IO_BANK0, &pac.SIO);
 
     let app_display = app_core::features::display::Display::default();
+    let mut app_charger = app_core::features::charger::Charger::default();
 
     let mut scheduler = Scheduler::<State, Action>::new([
         Box::new(FnTask::new(move |state: &mut State| {
@@ -93,6 +117,25 @@ fn main() -> ! {
             (None, NextRun::InOrder)
         })) as _,
         Box::new(app_display) as _,
+        Box::new(FnTask::new(move |state: &mut State| {
+            let mut sum1 = 0;
+            let mut sum2 = 0;
+            const N: u16 = 16;
+            for _ in 0..N {
+                let v1: u16 = adc.read(&mut bat_v1_pin).unwrap();
+                sum1 += v1;
+                let v2: u16 = adc.read(&mut bat_v2_pin).unwrap();
+                sum2 += v2;
+            }
+            sum2 -= sum1;
+            let v1 = adc_f32(sum1) / N as f32;
+            let v2 = adc_f32(sum2) / N as f32;
+
+            state.bat_voltage = (v1, v2);
+            state.ext_power = ext_power_detect_pin.is_high().unwrap();
+
+            app_charger.run(state)
+        })) as _,
     ]);
 
     let mut state = State::default();
@@ -103,6 +146,14 @@ fn main() -> ! {
                 Action::Display(action) => match action {
                     seg_disp::disp::Action::Render(c, i) => {
                         seg_disp_update(c, i, &pac.SIO);
+                    }
+                },
+                Action::Battery(action) => match action {
+                    ChargerAction::Charge => {
+                        ncharge_pin.set_low().unwrap();
+                    }
+                    ChargerAction::Hold => {
+                        ncharge_pin.set_high().unwrap();
                     }
                 },
             }
