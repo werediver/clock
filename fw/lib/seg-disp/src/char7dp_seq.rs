@@ -21,6 +21,12 @@ impl<'a> IndexMut<usize> for Char7DPSeq<'a> {
     }
 }
 
+impl<'a> AsRef<[Char7DP]> for Char7DPSeq<'a> {
+    fn as_ref(&self) -> &[Char7DP] {
+        &self.chars
+    }
+}
+
 impl<'a> Char7DPSeq<'a> {
     pub fn new(chars: &'a mut [Char7DP]) -> Self {
         Self { chars }

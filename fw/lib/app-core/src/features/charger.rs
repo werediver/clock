@@ -14,10 +14,10 @@ pub enum ChargerAction {
 
 #[derive(PartialEq, Eq, Copy, Clone, Debug)]
 pub enum BatteryState {
-    AboveNominal,
-    BelowNominal,
     /// Battery voltage is too low. Stop discharge.
     Critical,
+    BelowNominal,
+    AboveNominal,
     // Charging is in progress.
     Charging,
     // Charging has been completed.

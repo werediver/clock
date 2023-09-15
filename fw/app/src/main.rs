@@ -72,8 +72,8 @@ fn main() -> ! {
         hal::rtc::DateTime {
             year: 2023,
             month: 4,
-            day_of_week: hal::rtc::DayOfWeek::Friday,
             day: 7,
+            day_of_week: hal::rtc::DayOfWeek::Friday,
             hour: 9,
             minute: 1,
             second: 0,
@@ -114,7 +114,7 @@ fn main() -> ! {
                 second: now.second,
             };
 
-            (None, NextRun::InOrder)
+            (None, NextRun::After(Duration::from_ticks(200_000)))
         })) as _,
         Box::new(app_display) as _,
         Box::new(FnTask::new(move |state: &mut State| {
